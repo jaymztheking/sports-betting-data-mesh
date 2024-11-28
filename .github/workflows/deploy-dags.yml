@@ -2,6 +2,8 @@ name: Deploy DAGs to Airflow
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -24,20 +26,18 @@ jobs:
         run: |
           echo "$KUBECONFIG_DATA" | base64 -d > kubeconfig
           export KUBECONFIG=$PWD/kubeconfig
-          echo "Kubeconfig successfully loaded."
+          echo "Kubeconfig file successfully created."
+
+      # Check contents of kubeconfig
+      - name: Debug kubeconfig
+        run: |
+          echo "Checking kubeconfig file contents..."
+          ls -l $PWD/kubeconfig
+          cat kubeconfig | head -n 10
+          grep "clusters" kubeconfig || echo "No clusters found in kubeconfig"
+          grep "contexts" kubeconfig || echo "No contexts found in kubeconfig"
 
       # Verify kubectl connectivity
       - name: Verify kubectl
         run: |
           sudo kubectl get nodes
-
-      # Deploy DAGs to Airflow Pods
-      - name: Deploy DAGs
-        env:
-          PODS: $(sudo kubectl get pods -n airflow -l app=airflow -o jsonpath='{.items[*].metadata.name}')
-        run: |
-          echo "Copying DAGs to Airflow pods..."
-          for pod in $PODS; do
-            echo "Copying DAGs to $pod"
-            sudo kubectl cp dags/ $pod:/opt/airflow/dags -n airflow
-          done
