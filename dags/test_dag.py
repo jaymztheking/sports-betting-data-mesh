@@ -3,6 +3,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.operators.python import PythonOperator
 from datetime import datetime
 
+#comment
 def test_minio_connection():
     hook = S3Hook(aws_conn_id="minio")  # Replace with your Airflow connection ID
     buckets = hook.list_buckets()
