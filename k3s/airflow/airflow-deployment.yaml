@@ -15,23 +15,34 @@ spec:
     spec:
       serviceAccountName: airflow-sa
       initContainers:
-      - name: airflow-db-init
-        image: apache/airflow:2.7.2
-        command:
-          - /bin/bash
-          - -c
-          - |
-            if airflow db check; then
-              echo "Database already initialized, skipping db init."
-            else
-              echo "Initializing Airflow database..."
-              airflow db init
-            fi
-        envFrom:
-          - configMapRef:
-              name: airflow-env
-          - secretRef:
-              name: airflow-postgres-secret
+        - name: airflow-db-init
+          image: apache/airflow:2.7.2
+          command:
+            - /bin/bash
+            - -c
+            - |
+              if airflow db check; then
+                echo "Database already initialized, skipping db init."
+              else
+                echo "Initializing Airflow database..."
+                airflow db init
+              fi
+          envFrom:
+            - configMapRef:
+                name: airflow-env
+            - secretRef:
+                name: airflow-postgres-secret
+        - name: install-amazon-provider
+          image: apache/airflow:2.7.2
+          command:
+            - /bin/bash
+            - -c
+            - |
+              echo "Installing apache-airflow-providers-amazon..."
+              pip install apache-airflow-providers-amazon
+          volumeMounts:
+            - name: airflow-pip-packages
+              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
       containers:
         - name: airflow-webserver
           image: apache/airflow:2.7.2
@@ -46,6 +57,8 @@ spec:
           volumeMounts:
             - name: airflow-dags
               mountPath: /opt/airflow/dags
+            - name: airflow-pip-packages
+              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
         - name: airflow-scheduler
           image: apache/airflow:2.7.2
           args: ["scheduler"]
@@ -54,6 +67,9 @@ spec:
                 name: airflow-env
             - secretRef:
                 name: airflow-postgres-secret
+          volumeMounts:
+            - name: airflow-pip-packages
+              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
         - name: airflow-triggerer
           image: apache/airflow:2.7.2
           args: ["triggerer"]
@@ -62,6 +78,11 @@ spec:
                 name: airflow-env
             - secretRef:
                 name: airflow-postgres-secret
+          volumeMounts:
+            - name: airflow-pip-packages
+              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
       volumes:
         - name: airflow-dags
+          emptyDir: {}
+        - name: airflow-pip-packages
           emptyDir: {}

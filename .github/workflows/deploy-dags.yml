@@ -1,0 +1,38 @@
+name: Deploy DAGs to Airflow Pods
+
+on:
+  push:
+    paths:
+      - "dags/**"  # Trigger only when files in the `dags/` folder change
+
+jobs:
+  deploy-dags:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Kubernetes config
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+
+      # Step 3: Find all running Airflow pods
+      - name: Get Airflow pod names
+        id: get-pods
+        run: |
+          PODS=$(sudo kubectl get pods -n airflow -l app=airflow -o jsonpath='{.items[*].metadata.name}')
+          echo "PODS=${PODS}" >> $GITHUB_ENV
+
+      # Step 4: Copy DAGs to each Airflow pod
+      - name: Copy DAGs to all Airflow pods
+        run: |
+          for POD in $PODS; do
+            echo "Copying DAGs to $POD..."
+            sudo kubectl cp dags/ airflow/$POD:/opt/airflow/dags -c airflow-webserver
+            sudo kubectl cp dags/ airflow/$POD:/opt/airflow/dags -c airflow-scheduler
+            sudo kubectl cp dags/ airflow/$POD:/opt/airflow/dags -c airflow-triggerer
+          done
