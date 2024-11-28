@@ -2,42 +2,25 @@ name: Deploy DAGs to Airflow
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - "dags/**"
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
+  deploy-dags:
+    runs-on: self-hosted 
     steps:
-      # Checkout the repository
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Set up kubectl and configure kubeconfig
-      - name: Set up kubectl
+      - name: Copy DAGs to Airflow containers
         run: |
-          sudo apt-get update
-          sudo apt-get install -y kubectl
+          # Get the list of Airflow pods
+          PODS=$(sudo kubectl get pods -n airflow -l app=airflow -o jsonpath='{.items[*].metadata.name}')
 
-      # Load kubeconfig from secret
-      - name: Load kubeconfig from secret
-        env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
-        run: |
-          echo "$KUBE_CONFIG_DATA" | base64 -d > kubeconfig
-          echo "KUBECONFIG is set to $(pwd)/kubeconfig"
-
-      # Debug kubeconfig file
-      - name: Debug kubeconfig
-        run: |
-          echo "Verifying kubeconfig contents..."
-          ls -l kubeconfig
-          head -n 10 kubeconfig
-          grep "clusters" kubeconfig || echo "No clusters found in kubeconfig"
-          grep "contexts" kubeconfig || echo "No contexts found in kubeconfig"
-
-      # Verify kubectl connectivity
-      - name: Verify kubectl
-        run: |
-          sudo kubectl get nodes --kubeconfig=$(pwd)/kubeconfig
+          # Copy the dags folder to each container in every Airflow pod
+          for pod in $PODS; do
+            for container in airflow-webserver airflow-scheduler airflow-triggerer; do
+              echo "Copying DAGs to $container in pod $pod..."
+              sudo kubectl cp ./dags "$pod":/opt/airflow/dags -n airflow -c "$container"
+            done
+          done
