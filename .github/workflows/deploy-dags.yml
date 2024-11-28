@@ -32,6 +32,7 @@ jobs:
         run: |
           echo "${{ secrets.KUBE_CONFIG}}"
 
+
       # Step 4: Find all running Airflow pods
       - name: Get Airflow pod names
         id: get-pods
