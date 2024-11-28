@@ -28,6 +28,10 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
           chmod 600 ~/.kube/config
 
+      - name: Verify kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG}}"
+
       # Step 4: Find all running Airflow pods
       - name: Get Airflow pod names
         id: get-pods
@@ -35,7 +39,7 @@ jobs:
           PODS=$(sudo kubectl get pods -n airflow -l app=airflow -o jsonpath='{.items[*].metadata.name}')
           echo "PODS=${PODS}" >> $GITHUB_ENV
 
-      # Step 4: Copy DAGs to each Airflow pod
+      # Step 5: Copy DAGs to each Airflow pod
       - name: Copy DAGs to all Airflow pods
         run: |
           for POD in $PODS; do
