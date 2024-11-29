@@ -21,6 +21,6 @@ jobs:
           for pod in $PODS; do
             for container in airflow-webserver airflow-scheduler airflow-triggerer; do
               echo "Copying DAGs to $container in pod $pod..."
-              sudo kubectl cp ./dags "$pod":/opt/airflow/dags -n airflow -c "$container"
+              sudo kubectl cp ./dags/. "$pod":/opt/airflow/dags -n airflow -c "$container"
             done
           done

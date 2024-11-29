@@ -5,7 +5,7 @@ from datetime import datetime
 
 #commen
 def test_minio_connection():
-    hook = S3Hook(aws_conn_id="minio")  # Replace with your Airflow connection ID
+    hook = S3Hook(aws_conn_id="minio")
     buckets = hook.list_buckets()
     print(f"Successfully connected to MinIO. Buckets: {buckets}")
 

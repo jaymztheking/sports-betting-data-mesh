@@ -59,6 +59,8 @@ spec:
               mountPath: /opt/airflow/dags
             - name: airflow-pip-packages
               mountPath: /opt/airflow/.local/lib/python3.8/site-packages
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
         - name: airflow-scheduler
           image: apache/airflow:2.7.2
           args: ["scheduler"]
@@ -70,6 +72,10 @@ spec:
           volumeMounts:
             - name: airflow-pip-packages
               mountPath: /opt/airflow/.local/lib/python3.8/site-packages
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+            - name: airflow-dags
+              mountPath: /opt/airflow/dags
         - name: airflow-triggerer
           image: apache/airflow:2.7.2
           args: ["triggerer"]
@@ -81,8 +87,14 @@ spec:
           volumeMounts:
             - name: airflow-pip-packages
               mountPath: /opt/airflow/.local/lib/python3.8/site-packages
+            - name: airflow-logs
+              mountPath: /opt/airflow/logs
+            - name: airflow-dags
+              mountPath: /opt/airflow/dags
       volumes:
         - name: airflow-dags
           emptyDir: {}
         - name: airflow-pip-packages
+          emptyDir: {}
+        - name: airflow-logs
           emptyDir: {}
