@@ -32,20 +32,9 @@ spec:
                 name: airflow-env
             - secretRef:
                 name: airflow-postgres-secret
-        - name: install-amazon-provider
-          image: apache/airflow:2.7.2
-          command:
-            - /bin/bash
-            - -c
-            - |
-              echo "Installing apache-airflow-providers-amazon..."
-              pip install apache-airflow-providers-amazon
-          volumeMounts:
-            - name: airflow-pip-packages
-              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
       containers:
         - name: airflow-webserver
-          image: apache/airflow:2.7.2
+          image: jaymztheking/airflow:custom
           args: ["webserver"]
           envFrom:
             - configMapRef:
@@ -57,12 +46,13 @@ spec:
           volumeMounts:
             - name: airflow-dags
               mountPath: /opt/airflow/dags
-            - name: airflow-pip-packages
-              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
             - name: airflow-logs
               mountPath: /opt/airflow/logs
+            - name: airflow-config
+              mountPath: /opt/airflow/airflow.cfg
+              subPath: airflow.cfg              
         - name: airflow-scheduler
-          image: apache/airflow:2.7.2
+          image: jaymztheking/airflow:custom
           args: ["scheduler"]
           envFrom:
             - configMapRef:
@@ -70,14 +60,15 @@ spec:
             - secretRef:
                 name: airflow-postgres-secret
           volumeMounts:
-            - name: airflow-pip-packages
-              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
             - name: airflow-logs
               mountPath: /opt/airflow/logs
             - name: airflow-dags
               mountPath: /opt/airflow/dags
+            - name: airflow-config
+              mountPath: /opt/airflow/airflow.cfg
+              subPath: airflow.cfg            
         - name: airflow-triggerer
-          image: apache/airflow:2.7.2
+          image: jaymztheking/airflow:custom
           args: ["triggerer"]
           envFrom:
             - configMapRef:
@@ -85,16 +76,18 @@ spec:
             - secretRef:
                 name: airflow-postgres-secret
           volumeMounts:
-            - name: airflow-pip-packages
-              mountPath: /opt/airflow/.local/lib/python3.8/site-packages
             - name: airflow-logs
               mountPath: /opt/airflow/logs
             - name: airflow-dags
               mountPath: /opt/airflow/dags
+            - name: airflow-config
+              mountPath: /opt/airflow/airflow.cfg
+              subPath: airflow.cfg
       volumes:
         - name: airflow-dags
           emptyDir: {}
-        - name: airflow-pip-packages
-          emptyDir: {}
         - name: airflow-logs
           emptyDir: {}
+        - name: airflow-config
+          configMap:
+            name: airflow-config
