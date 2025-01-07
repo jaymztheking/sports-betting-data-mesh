@@ -1,21 +1,14 @@
 from airflow import DAG
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from airflow.operators.python import PythonOperator
+from airflow.operators.dummy import DummyOperator
 from datetime import datetime
 
-#comment
-def test_minio_connection():
-    hook = S3Hook(aws_conn_id="minio")
-    buckets = hook.list_buckets()
-    print(f"Successfully connected to MinIO. Buckets: {buckets}")
-
 with DAG(
-    dag_id="test_minio_connection",
+    dag_id="test_dag",
     start_date=datetime(2023, 1, 1),
     schedule_interval=None,
     catchup=False,
 ) as dag:
-    test_connection_task = PythonOperator(
-        task_id="test_minio_connection",
-        python_callable=test_minio_connection,
-    )
+    start = DummyOperator(task_id="start")
+    end = DummyOperator(task_id="end")
+
+    start >> end
